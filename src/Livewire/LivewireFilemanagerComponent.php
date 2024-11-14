@@ -159,7 +159,7 @@ class LivewireFilemanagerComponent extends Component
             ],
         ]);
 
-        $newFolder = new Folder;
+        $newFolder = new Folder();
 
         $newFolder->name = trim($this->newFolderName) ?: __('livewire-filemanager::filemanager.folder_without_title');
         $newFolder->slug = Str::slug(trim($this->newFolderName) ?: __('livewire-filemanager::filemanager.folder_without_title'));
@@ -242,6 +242,56 @@ class LivewireFilemanagerComponent extends Component
         }
 
         $this->files = [];
+    }
+
+    public function uploadFilesWithDirectories($files)
+    {
+        dd($files);
+        foreach ($files as $fileData) {
+            $relativePath = $fileData['relativePath'];
+            $file = $fileData['file'];
+
+            // Ensure folders are created for the relative path
+            $targetFolder = $this->createFolderFromPath($relativePath);
+
+            // Upload the file to the target folder
+            $targetFolder->addMedia($file->getRealPath())
+                ->usingName($file->getClientOriginalName())
+                ->sanitizingFileName(function ($fileName) use ($file) {
+                    $extension = pathinfo($file->getRealPath(), PATHINFO_EXTENSION);
+                    $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    return strtolower(Str::slug($name).'.'.$extension);
+                })
+                ->withCustomProperties(['user_id' => optional(Auth::user())->id])
+                ->toMediaCollection('medialibrary');
+        }
+    }
+
+    private function createFolderFromPath($path)
+    {
+        $folders = explode('/', trim($path, '/'));
+        $parentFolder = $this->currentFolder;
+
+        foreach ($folders as $folderName) {
+            $slug = Str::slug($folderName);
+
+            $existingFolder = Folder::where('slug', $slug)
+                ->where('parent_id', ($parentFolder ? $parentFolder->id : null))
+                ->first();
+
+            if ($existingFolder) {
+                $parentFolder = $existingFolder;
+            } else {
+                $newFolder = new Folder();
+                $newFolder->name = $folderName;
+                $newFolder->slug = $slug;
+                $newFolder->parent_id = $parentFolder ? $parentFolder->id : null;
+                $newFolder->save();
+                $parentFolder = $newFolder;
+            }
+        }
+
+        return $parentFolder;
     }
 
     public function handleMediaClick($fileId)

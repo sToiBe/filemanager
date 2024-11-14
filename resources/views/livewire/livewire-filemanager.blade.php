@@ -256,11 +256,56 @@
                 },
 
                 handleFileDrop(e) {
-                    if (event.dataTransfer.files.length > 0) {
-                        const files = e.dataTransfer.files;
-                        @this.uploadMultiple('files', files,
-                            (uploadedFilename) => {}, () => {}, (event) => {}
-                        )
+                    const items = e.dataTransfer.items;
+                    const files = [];
+
+                    for (const item of items) {
+                        const entry = item.webkitGetAsEntry();
+                        if (entry) {
+                            this.addFilesFromEntry(entry, '', files).then(() => {
+                                @this.uploadFilesWithDirectories(files);
+                            });
+                        }
+                    }
+
+                    // if (event.dataTransfer.files.length > 0) {
+                    //     const files = e.dataTransfer.files;
+                    //     @this.uploadMultiple('files', files,
+                    //         (uploadedFilename) => {}, () => {}, (event) => {}
+                    //     )
+                    // }
+                },
+
+                async addFilesFromEntry(entry, path, files) {
+                    if (entry.isFile) {
+                        // Try-catch to capture any issues with entry.file()
+                        try {
+                            await new Promise((resolve, reject) => {
+                                entry.file((file) => {
+                                    // Ensure the file is successfully retrieved
+                                    if (file) {
+                                        files.push({ file, relativePath: path });
+                                        resolve();
+                                    } else {
+                                        reject(new Error("File entry could not be retrieved"));
+                                    }
+                                }, (error) => {
+                                    reject(error);  // Handle errors in entry.file
+                                });
+                            });
+                        } catch (error) {
+                            console.error("Error retrieving file entry:", error);
+                        }
+                    } else if (entry.isDirectory) {
+                        const reader = entry.createReader();
+                        await new Promise((resolve) => {
+                            reader.readEntries(async (entries) => {
+                                for (const subEntry of entries) {
+                                    await this.addFilesFromEntry(subEntry, `${path}/${entry.name}`, files);
+                                }
+                                resolve();
+                            });
+                        });
                     }
                 }
             };
