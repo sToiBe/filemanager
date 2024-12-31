@@ -54,8 +54,20 @@
                                 <div class="mx-2 px-2 dark:text-zinc-500">|</div>
                             @endif
 
+                            <div x-data="viewToggle()">
+                                <button @click="toggleView" class="border rounded p-1.5 border-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 dark:border-zinc-600 dark:text-zinc-500" @click="Livewire.dispatch('reset-media', { media_id: null })">
+                                    <svg data-icon="grid" x-cloak x-show="!isGrid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                                    </svg>
+
+                                    <svg data-icon="list" x-cloak x-show="isGrid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+                                    </svg>
+                                </button>
+                            </div>
+
                             <div>
-                                <button class="border rounded p-1.5 border-zinc-300 dark:border-zinc-600 dark:text-zinc-500" @click="Livewire.dispatch('reset-media', { media_id: null })" wire:click="createNewFolder">
+                                <button class="border rounded p-1.5 border-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 dark:border-zinc-600 dark:text-zinc-500" @click="Livewire.dispatch('reset-media', { media_id: null })" wire:click="createNewFolder">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                                     </svg>
@@ -91,7 +103,8 @@
                     x-on:dragover.prevent="dropingFile = true"
                     x-on:dragleave.prevent="dropingFile = false"
                     x-on:dblclick.self="$wire.createNewFolder()"
-                    class="p-2 pb-10 min-h-[500px] select-none overflow-y-auto flex relative flex-wrap content-start">
+                    class="p-2 pb-10 min-h-[500px] select-none overflow-y-auto flex relative flex-wrap content-start"
+                    :class="isGrid ? 'flex flex-wrap' : 'flex flex-col space-y-2'">
                         @if ($isCreatingNewFolder)
                             <div class="cursor-pointer mb-4 max-w-[137px] min-w-[137px] max-h-[137px] min-h-[137px] items-start p-2 mx-1 text-center" @click.outside="$wire.saveNewFolder">
                                 <x-livewire-filemanager::icons.folder class="mx-auto w-16 h-16 mb-2" />
@@ -101,16 +114,16 @@
                         @endif
 
                         @foreach($folders->sortBy('name') as $folder)
-                            <x-livewire-filemanager::elements.directory :folder="$folder" :selectedFolders="$selectedFolders" :key="'folder-' . $folder->id" />
+                            <x-livewire-filemanager::elements.directory :folder="$folder" :selectedFolders="$selectedFolders" :key="'folder-' . $folder->id" :is-grid="'isGrid'" />
                         @endforeach
 
                         @if($searchedFiles)
                             @foreach($searchedFiles->sortBy('file_name') as $media)
-                                <x-livewire-filemanager::elements.media :media="$media" :selectedFiles="$selectedFiles" :key="'searched-file-' . $media->id" />
+                                <x-livewire-filemanager::elements.media :media="$media" :selectedFiles="$selectedFiles" :key="'searched-file-' . $media->id" :is-grid="'isGrid'" />
                             @endforeach
                         @else
                             @foreach($currentFolder->getMedia('medialibrary')->sortBy('file_name') as $media)
-                                <x-livewire-filemanager::elements.media :media="$media" :selectedFiles="$selectedFiles" :key="'file-' . $media->id" />
+                                <x-livewire-filemanager::elements.media :media="$media" :selectedFiles="$selectedFiles" :key="'file-' . $media->id" :is-grid="'isGrid'" />
                             @endforeach
                         @endif
                     </div>
@@ -143,6 +156,16 @@
     @endif
 
     <script>
+        function viewToggle() {
+            return {
+                isGrid: JSON.parse(localStorage.getItem('viewStyle')) ?? true,
+                toggleView() {
+                    this.isGrid = !this.isGrid;
+                    localStorage.setItem('viewStyle', JSON.stringify(this.isGrid));
+                }
+            };
+        }
+
         function FilemanagerComponent() {
             return {
                 dropingFile: false,
@@ -152,6 +175,7 @@
                 startY: 0,
                 drawnArea: null,
                 drawingTimeout: null,
+                isGrid: JSON.parse(localStorage.getItem('viewStyle')) ?? true,
 
                 initiateDrawing(event) {
                     this.isPending = true;
@@ -253,6 +277,15 @@
                              drawnRect.right < elementRect.left ||
                              drawnRect.top > elementRect.bottom ||
                              drawnRect.bottom < elementRect.top);
+                },
+
+                toggleView() {
+                    this.isGrid = !this.isGrid;
+                    this.saveViewPreference();
+                },
+
+                saveViewPreference() {
+                    localStorage.setItem('viewStyle', JSON.stringify(this.isGrid));
                 },
 
                 handleFileDrop(e) {
