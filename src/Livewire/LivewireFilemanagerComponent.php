@@ -14,6 +14,10 @@ class LivewireFilemanagerComponent extends Component
 {
     use WithFileUploads;
 
+    public $model_type;
+
+    public $model_id;
+
     public $currentFolder = null;
 
     public $search = '';
@@ -38,15 +42,20 @@ class LivewireFilemanagerComponent extends Component
 
     protected $listeners = ['fileAdded'];
 
-    public function mount()
+    public function mount(string|null $model_type = null, int|null $model_id = null)
     {
         if (! session('currentFolderId')) {
             session(['currentFolderId' => 1]);
         }
 
+        $this->model_type = $model_type;
+        $this->model_id = $model_id;
+
         $currentFolderId = session('currentFolderId');
 
-        $this->currentFolder = Folder::with(['children', 'parent'])->where('id', $currentFolderId)->first();
+        $this->currentFolder = Folder::when($model_type && $model_id, function ($query) {
+            return $query->where('model_type', $this->model_type)->where('model_id', $this->model_id);
+        })->with(['children', 'parent'])->where('id', $currentFolderId)->first();
         $this->breadcrumb = $this->generateBreadcrumb($this->currentFolder);
 
         if ($this->currentFolder) {
@@ -163,11 +172,13 @@ class LivewireFilemanagerComponent extends Component
             ],
         ]);
 
-        $newFolder = new Folder;
+        $newFolder = new Folder();
 
         $newFolder->name = trim($this->newFolderName) ?: __('livewire-filemanager::filemanager.folder_without_title');
         $newFolder->slug = Str::slug(trim($this->newFolderName) ?: __('livewire-filemanager::filemanager.folder_without_title'));
         $newFolder->parent_id = ($this->currentFolder ? $this->currentFolder->id : null);
+        $newFolder->model_type = ($this->model_type ? $this->model_type : null);
+        $newFolder->model_id = ($this->model_id ? $this->model_id : null);
         $newFolder->save();
 
         $this->currentFolder = $newFolder;

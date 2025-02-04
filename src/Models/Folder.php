@@ -17,6 +17,8 @@ class Folder extends Model implements HasMedia
 
     protected $fillable = [
         'parent_id',
+        'model_type',
+        'model_id',
         'name',
         'slug',
     ];
