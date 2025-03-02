@@ -16,9 +16,9 @@ trait HasMediaOwner
 			$user = null;
 
 			try {
-				$user = auth()->getUser();
-			} catch (\Exception $e) {
 				$user = auth()->user();
+			} catch (\Exception $e) {
+				$user = auth()->getUser();
 			}
 
 			if ($user) {
