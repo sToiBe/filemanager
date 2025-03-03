@@ -3,6 +3,7 @@
 namespace LivewireFilemanager\Filemanager\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 trait HasMediaOwner
 {
@@ -13,12 +14,12 @@ trait HasMediaOwner
                 return;
             }
 
-			$user = auth()->user();
+			$user = Auth::user();
 
 			if ($user) {
                 $builder->where(
                     'custom_properties->user_id',
-                    $user->id
+					Auth::id()
                 );
             }
         });
