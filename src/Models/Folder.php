@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -39,7 +40,7 @@ class Folder extends Model implements HasMedia
                 return;
             }
 
-            $user = auth()->getUser();
+            $user = Auth::user();
 
             if ($user) {
                 $folder->user_id = $user->id;
@@ -54,7 +55,7 @@ class Folder extends Model implements HasMedia
                 return;
             }
 
-            $user = auth()->getUser();
+            $user = Auth::user();
 
             if ($user) {
                 $builder->where(
